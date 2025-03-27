@@ -1,0 +1,31 @@
+{   
+    "status": "success",
+    "message": "회원 목록을 성공적으로 가져왔습니다.",
+    "data" : [
+        {
+            "user_id": "6ff7e14a-ec0c-4daa-aa6f-4a5254cb86d3",
+            "user_name": "이승우",
+            "user_number": "1"
+        },
+        {
+            "user_id": "d6496b02-8811-4f2b-9c9c-5d9f0b2d5e64",
+            "user_name": "박지영",
+            "user_number": "2"
+        },
+        {
+            "user_id": "cc29b605-ebd0-4ea3-b68c-8b0e5b67f2e3",
+            "user_name": "최현정",
+            "user_number": "3"
+        },
+        {
+            "user_id": "f2be4f44-042e-482c-b52f-08f5e8a32b7d",
+            "user_name": "정민수",
+            "user_number": "4"
+        },
+        {
+            "user_id": "38bf3e61-8f9a-4c4c-8bfc-785c6c86f017",
+            "user_name": "황지원",
+            "user_number": "5"
+        }
+    ]
+}
