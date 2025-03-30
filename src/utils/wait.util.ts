@@ -1,65 +1,68 @@
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, type Ref, type ComputedRef } from "vue";
 
-type DataType = 'array' | 'object' | 'string' | 'number' | 'boolean' | 'any';
-
-interface DataSource<T = any> {
-    // 데이터 소스 (값, ref, computed, 또는 함수)
-    source: T | (() => T);
-
-    // 데이터 타입 (검증에 사용)
+export enum DataType {
+    Array = 'array',
+    Object = 'object',
+    String = 'string',
+    Number = 'number',
+    Boolean = 'boolean',
+    Any = 'any'
+}
+export interface DataSource<T = any> {
+    source: T | Ref<T> | ComputedRef<T> | (() => T);
     type?: DataType;
-
-    // 소스이름 (디버깅용, 옵션)
     name?: string;
+}
+
+function getValue<T>(src: DataSource<T>['source']): T {
+    if (typeof src === 'function') return (src as () => T)();
+    if ('value' in (src as any)) return (src as Ref<T>).value;
+    return src as T; 
+}
+
+function isValueValid(value: unknown, type: DataType): boolean {
+    if (value === undefined || value === null) return false;
+    switch(type) {
+        case DataType.Array: 
+            return Array.isArray(value) && value.length > 0;
+
+        case DataType.Object:
+            return typeof value === 'object' &&
+            !Array.isArray(value) &&
+            !(value instanceof Date) &&
+            Object.keys(value).length > 0;
+
+        case DataType.String:
+            return typeof value === 'string' && value.trim() !== '';
+
+        case DataType.Number:
+            return typeof value === 'number' && !isNaN(value);
+
+        case DataType.Boolean:
+            return typeof value === 'boolean';
+
+        case DataType.Any:
+        default: 
+            return true;
+    }
 }
 
 function _useDataWatcher(sources: DataSource[]) {
     const sourceValues =  ref<any[]>([]);
     const sourceReady = ref<boolean[]>([]);
-
-    // 감시 중지 함수들 저장
-    const unwatchFunctions: (() => void)[] = [];
+    const unwatchFns: (() => void)[] = [];
 
     const isReady = computed(() => 
-        sourceReady.value.length > 0 && sourceReady.value.every(ready => ready)
+        sourceReady.value.length > 0 && sourceReady.value.every(Boolean)
     )
 
     sources.forEach((source, index) => {
-        // 초기값 설정
         sourceValues.value[index] = null;
         sourceReady.value[index] = false;
 
-        const retrieveSourceValue = () => {
-            const src = source.source;
-            return typeof src === 'function' ? src() : src;
-        }
-
-        const isValueValid = (value: any): boolean => {
-            if (value === undefined || value === null) return false;
-            const type = source.type || 'any';
-            switch (type) {
-                case 'array':
-                    return Array.isArray(value) && value.length > 0;
-                case 'object':
-                    return typeof value === 'object' &&
-                        !Array.isArray(value) &&
-                        !(value instanceof Date) &&
-                        Object.keys(value).length > 0;
-                case 'string':
-                    return typeof value === 'string' && value.trim() !== '';
-                case 'number':
-                    return typeof value === 'number' && !isNaN(value);
-                case 'boolean':
-                    return typeof value === 'boolean';
-                case 'any':
-                default:
-                    return true; 
-            }
-        };
-
-        const updateSourceState = (newValue: any) => {
+        const update = (newValue: any) => {
             sourceValues.value[index] = newValue;
-            const valid = isValueValid(newValue);
+            const valid = isValueValid(newValue, source.type ?? DataType.Any);
             sourceReady.value[index] = valid;
 
             const name = source.name || `source_${index}`;
@@ -67,29 +70,42 @@ function _useDataWatcher(sources: DataSource[]) {
             
         };
 
-        const initialValue = retrieveSourceValue();
-        updateSourceState(initialValue);
+        const initial = getValue(source.source);
+        update(initial);
 
         const unwatch = watch(
-            retrieveSourceValue,
-            updateSourceState,
+            () => getValue(source.source),
+            update,
             { deep: true }
         );
 
-        unwatchFunctions.push(unwatch);
-
+        unwatchFns.push(unwatch);
     });
 
-    const stopAllWatchers = () => {
-        unwatchFunctions.forEach(unwatch => unwatch);
-        unwatchFunctions.length = 0;
+    const onReady = (callback: (values: any[]) => void): void => {
+        if (isReady.value) {
+            callback(sourceValues.value);
+            return
+        }
+        const stop = watch(isReady, (ready) => {
+            if (ready) {
+                stop();
+                callback(sourceValues.value)
+            }
+        })
+    }
+
+    const stop = () => {
+        unwatchFns.forEach(un => un());
+        unwatchFns.length = 0;
     };
 
     return {
         isReady,
         values: computed(() => sourceValues.value),
         readyStates: computed(() => sourceReady.value),
-        stop: stopAllWatchers
+        stop,
+        onReady,
     }
 }
 

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Child :crswr-id="crswrId"/>
+    <Child :crswr-id="crswrId" :user-id="userId"/>
   </div>
 </template>
 <script setup lang="ts">
@@ -13,12 +13,16 @@
 	const testStore = useTestStore();
 	const { getTeacherMember } = storeToRefs(testStore);
 	const crswrId = ref('');
+	const userId = ref('');
 
 	onMounted(() => {
 		// console.log('mounted', testStore.getTeacherMember);
 		setTimeout(() => {
 			crswrId.value = '123';
-		}, 200);
+		}, 2000);
+		setTimeout(() => {
+			userId.value = 'abc'
+		}, 5000)
 	});
 
 </script>
