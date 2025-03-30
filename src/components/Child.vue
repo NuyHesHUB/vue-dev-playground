@@ -4,10 +4,10 @@
 	</div>
   </template>
 <script setup lang="ts">
-	import { onMounted, ref, watch } from 'vue';
+	import { onMounted, ref, watch, watchEffect } from 'vue';
 	import { storeToRefs } from 'pinia';
 	import { useTestStore } from '../store/test.pinia';
-	import { useAsyncDataLoader } from '../utils/wait.util';
+	import { useDataWatcher } from '../utils/wait.util';
 
 	const props = defineProps<{
 		crswrId?: any;
@@ -19,34 +19,47 @@
 
 	const testStore = useTestStore();
 	// const { getTeacherMember } = storeToRefs(testStore);
-	const { isReady, storeData, propsData } = useAsyncDataLoader(
-		testStore, 'getTeacherMember',
-		props, 'crswrId'
-	);
 
+	const { isReady, values } = useDataWatcher([
+		{ source: () => testStore.getTeacherMember, type: 'array', name: 'memberData1' },
+		{ source: () => testStore.getTeacherMember, type: 'array', name: 'memberData2' },
+		{ source: () => props.crswrId, type: 'string', name: 'crswrId' }
+	])
+
+	watch(isReady, (ready) => {
+		console.log('ready', ready);
+		const memberList = values.value[0]
+		const crswrId = values.value[2]
+		console.log('values', memberList, crswrId);
+	})
+
+	/* watchEffect(() => {
+		console.log('isReady', values.value);
+		
+	}) */
 	/* onMounted(() => {
 		console.log('child mounted 1',isReady.value);
 		console.log('child mounted 2',storeData.value);
 		console.log('child mounted 3',propsData.value);
-		
 	}); */
 
-	watch(isReady, (newVal) => {
-    if (newVal) {
-      console.log('데이터 모두 준비됨:', {
-        storeData: storeData.value,
-        propsData
-      });
-      
-      // 이제 storeData와 propsData(crswrId)를 사용한 로직 실행 가능
-      // 예: 특정 crswrId에 맞는 교사 정보 필터링
-      /* const teacherForCourse = storeData.value.find(
-		  (teacher: { courses: string | any[]; }) => teacher.courses?.includes(propsData.value)
-      ); */
-      
-      console.log('해당 강좌의 교사:');
-    }
-  });
+	/* watchEffect(() => {
+		if (isReady.value) {
+			console.log('child mounted 1',isReady.value);
+			console.log('child mounted 2',storeData.value);
+			console.log('child mounted 3',propsData.value);
+		}
+	}) */
+
+	/* watch(isReady, (newVal) => {
+		if (newVal) {
+		console.log('데이터 모두 준비됨:', {
+			storeData: storeData.value,
+			propsData
+		});
+		console.log('해당 강좌의 교사:');
+		}
+    }); */
 
 	/* watch(() => props.crswrId, (newVal, oldVal) => {
 		console.log('child watch', newVal, oldVal);
