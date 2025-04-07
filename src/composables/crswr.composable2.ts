@@ -22,22 +22,30 @@ function useFindCrswr (params: UseFindCrswrParams) {
 
     if (data) crswrItems.value = [ ...data ];
     // 리스트도 전달하고 최근 값도 찾아서 리턴?
+    let findResultId: string = '';
+
     switch (findType) {
         case FindType.RCNT:
-            return crswrItems.value.find(
+            findResultId = crswrItems.value.find(
                 item => item.ltnLrnYn === 'Y'
                 && item.parntsCrswr === null
             )?.crswrId ?? 'all';
+            break;
         case FindType.EXAM:
-            return crswrItems.value.find(
+            findResultId =crswrItems.value.find(
                 item => item.ltnLrnYn === 'Y'
                 && item.parntsCrswr === null
             )?.crswrId ?? 'all';
+            break;
+    }
+    return {
+        crswrItems,
+        findResultId,
     }
 }
 
 export {
-    useFindCrswr
+    useFindCrswr,
 }
 
 // how to use
@@ -48,4 +56,4 @@ export {
     findType: FindType.RCNT
 } */
 
-/* const rcntCrswr = useFindCrswr(params); */
+/* const { crswrItems, resultId } = useFindCrswr(params); */
