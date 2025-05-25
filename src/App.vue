@@ -1,6 +1,7 @@
 <template>
   <div>
     <Child :crswr-id="crswrId" :user-id="userId"/>
+	<ButtonRenderer></ButtonRenderer>
   </div>
 </template>
 <script setup lang="ts">
@@ -9,11 +10,13 @@
 	import { storeToRefs } from 'pinia';
 
 	import Child from './components/Child.vue';
+import ButtonRenderer from './components/ButtonRenderer.vue';
 
 	const testStore = useTestStore();
 	const { getTeacherMember } = storeToRefs(testStore);
 	const crswrId = ref('');
 	const userId = ref('');
+
 
 	onMounted(() => {
 		// console.log('mounted', testStore.getTeacherMember);
